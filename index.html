@@ -78,9 +78,33 @@ table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-
 th, td { padding: 8px 8px; border-bottom: 1px solid var(--grid); text-align: right; white-space: nowrap; }
 th { color: var(--ink2); font-weight: 600; font-size: 12.5px; cursor: pointer; user-select: none; position: sticky; top: 0; background: var(--card); }
 th.l, td.l { text-align: left; }
-td.title { max-width: 300px; white-space: normal; min-width: 200px; }
-td.title a { color: var(--ink); text-decoration: none; font-weight: 600; }
-td.title .p { color: var(--muted); font-size: 12px; font-weight: 400; }
+td.title { width: 210px; max-width: 210px; min-width: 170px; white-space: normal; }
+td.title .tt { font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35; }
+td.title .p { color: var(--muted); font-size: 12px; font-weight: 400; margin-top: 2px; }
+/* 폰: 표 → 영상마다 카드 */
+@media (max-width: 720px) {
+  .wrap { padding: 12px 12px 40px; }
+  .card { padding: 12px; border-radius: 12px; }
+  .kpi .val { font-size: 22px; }
+  .tbl { overflow: visible; }
+  table, tbody { display: block; }
+  thead { display: none; }
+  tbody tr { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 8px; padding: 12px 2px; border-bottom: 1px solid var(--grid); }
+  tbody tr:hover { background: none; }
+  td { border: 0; padding: 0; text-align: left; white-space: normal; font-size: 14px; }
+  td[data-l]::before { content: attr(data-l); display: block; font-size: 11px; color: var(--muted); }
+  td.title { grid-column: 1 / -1; width: auto; max-width: none; min-width: 0; }
+  td.title .tt { font-size: 15px; }
+  td.len { display: none; }
+  td.na { display: none; }
+  td.stc { grid-column: span 2; }
+  td.spk { grid-column: span 2; align-self: end; text-align: right; }
+  .glossary { font-size: 12.5px; }
+  .tools select { flex: 1 1 40%; }
+  ul.terms { columns: 1; }
+  .chart { height: 200px; }
+  .chart.tall { height: 240px; }
+}
 tbody tr { cursor: pointer; }
 tbody tr:hover { background: var(--hover); }
 th[aria-sort="descending"]::after { content: " ↓"; } th[aria-sort="ascending"]::after { content: " ↑"; }
@@ -127,6 +151,7 @@ const short = n => n == null ? "-" : n >= 1e4 ? (n / 1e4).toFixed(n >= 1e5 ? 0 :
 const pct = (n, d = 0) => n == null ? "-" : n.toFixed(d) + "%";
 const BANDS = [["시험 중", "--r250"], ["1천 벽", "--r350"], ["2~5천 벽", "--r450"], ["1~3만 벽", "--r550"], ["돌파", "--r650"]];
 let charts = [], data = {}, current = null, sortKey = "published", sortDir = -1;
+const SORTS = [["published", "최신순"], ["views", "조회 많은 순"], ["v24", "1일 조회 순"], ["v72", "3일 조회 순"], ["avp", "평균 시청률 순"], ["r_end", "끝까지 본 % 순"], ["swipe", "넘긴 % 순"], ["lr", "좋아요율 순"], ["comments", "댓글 순"]];
 
 function baseOpts(extra = {}) {
   const ink2 = css("--ink2"), grid = css("--grid"), muted = css("--muted");
@@ -186,16 +211,17 @@ function render() {
     <div class="bands">${BANDS.map(([b, c]) => `<div class="band"><div class="t"><i style="background:var(${c})"></i>${b}</div><div class="n">${counts[b]}</div></div>`).join("")}</div>
   </section>
   <div class="grid two">
-    <div class="card"><h2>시간당 조회</h2><p class="desc">최근 72시간 · 채널 전체 · 기록 사이 증가를 시간당으로</p><div class="chart"><canvas id="cHour"></canvas></div></div>
+    <div class="card"><h2>시간당 조회</h2><p class="desc">최근 7일 · 채널 전체 · 기록 사이 증가를 시간당으로</p><div class="chart"><canvas id="cHour"></canvas></div></div>
     <div class="card"><h2>날짜별 조회</h2><p class="desc">유튜브 분석 · 1~2일 늦음</p><div class="chart"><canvas id="cDay"></canvas></div></div>
   </div>
   <section class="card">
     <h2>영상별</h2><p class="desc">줄을 누르면 조회가 늘어난 모양·좋아요/댓글·어디서 넘겼는지가 열립니다.</p>
-    <div class="glossary"><div><b>넘긴 %</b> 피드에 떴을 때 바로 넘겨 버린 비율(이탈율). 우리 채널은 대부분 45~55%라 영상끼리 차이가 작고, 지금까지는 조회와 거의 상관이 없었어요. 스튜디오 '시청함 vs 넘김'과 비슷하지만 같은 값은 아님.</div><div><b>평균 시청률</b> 영상 길이 대비 평균 몇 %를 봤나. 30초 영상을 평균 24초 봤으면 80%, <b>100%를 넘으면 끝까지 보고 다시 본 것</b>. 80% 아래면 대부분 1만을 못 넘었어요.</div><div><b>끝까지 본 %</b> 마지막 장면까지 남아 있던 시청자 비율. <b>80% 이상이면 크게 뜬 영상들 수준</b>(집에 가 83%, 야호 96%).</div><div><b>6·24·48시간</b> 공개하고 그 시간이 지났을 때 조회. <b>단계</b> 지금 조회가 어느 벽에 있는지, ▲ 최근 6시간에 3% 넘게 늘면 성장 중 / ■ 멈춤.</div></div>
+    <div class="glossary"><div><b>넘긴 %</b> 피드에 떴을 때 바로 넘겨 버린 비율(이탈율). 우리 채널은 대부분 45~55%라 영상끼리 차이가 작고, 지금까지는 조회와 거의 상관이 없었어요. 스튜디오 '시청함 vs 넘김'과 비슷하지만 같은 값은 아님.</div><div><b>평균 시청률</b> 영상 길이 대비 평균 몇 %를 봤나. 30초 영상을 평균 24초 봤으면 80%, <b>100%를 넘으면 끝까지 보고 다시 본 것</b>. 80% 아래면 대부분 1만을 못 넘었어요.</div><div><b>끝까지 본 %</b> 마지막 장면까지 남아 있던 시청자 비율. <b>80% 이상이면 크게 뜬 영상들 수준</b>(집에 가 83%, 야호 96%).</div><div><b>6시간·1일~7일</b> 공개하고 그만큼 지났을 때 조회(크게 뜬 영상은 2~5일째에 다시 커졌어요). <b>단계</b> 지금 조회가 어느 벽에 있는지, ▲ 최근 6시간에 3% 넘게 늘면 성장 중 / ■ 멈춤.</div></div>
     <div class="tools"><input id="q" placeholder="제목 검색" value="${window._q || ""}">
-      <select id="fb"><option value="">모든 단계</option>${BANDS.map(([b]) => `<option ${window._fb === b ? "selected" : ""}>${b}</option>`).join("")}</select></div>
+      <select id="fb"><option value="">모든 단계</option>${BANDS.map(([b]) => `<option ${window._fb === b ? "selected" : ""}>${b}</option>`).join("")}</select>
+      <select id="sk" aria-label="정렬">${SORTS.map(([k, n]) => `<option value="${k}" ${sortKey === k ? "selected" : ""}>${n}</option>`).join("")}</select></div>
     <div class="tbl"><table><thead><tr>
-      <th class="l" data-k="published">영상</th><th data-k="len">길이</th><th data-k="views">조회</th><th data-k="v6">6시간</th><th data-k="v24">24시간</th><th data-k="v48">48시간</th>
+      <th class="l" data-k="published">영상</th><th data-k="len">길이</th><th data-k="views">조회</th><th data-k="v6">6시간</th><th data-k="v24">1일</th><th data-k="v48">2일</th><th data-k="v72">3일</th><th data-k="v168">7일</th>
       <th data-k="swipe" title="피드에서 바로 넘긴 비율(100% − 넘기지 않고 본 조회)">넘긴 %</th><th data-k="avp" title="영상 길이 대비 평균 몇 % 봤나(100% 넘으면 다시 봄)">평균 시청률</th><th data-k="r_end" title="마지막 장면까지 남은 시청자 비율">끝까지 본 %</th><th data-k="lr" title="조회 100번에 좋아요 몇 개">좋아요율</th><th data-k="comments">댓글</th><th data-k="shares">공유</th><th data-k="band">단계</th><th class="l">추세</th>
     </tr></thead><tbody id="tb"></tbody></table></div>
     <div class="tools" style="margin:10px 0 0;justify-content:center"><button class="tab" id="more"></button></div>
@@ -213,6 +239,7 @@ function render() {
     <div class="card"><h2>나라·기기</h2><div class="chart"><canvas id="cCty"></canvas></div><p class="desc" style="margin-top:8px">${(d.device || []).map(x => `${x.deviceType} ${short(x.views)}`).join(" · ")}</p></div>
   </div>`;
   ["q", "fb"].forEach(id => $("#" + id).oninput = e => { window["_" + id] = e.target.value; table(); });
+  $("#sk").onchange = e => { sortKey = e.target.value; sortDir = -1; table(); };
   document.querySelectorAll("th[data-k]").forEach(th => th.onclick = () => { const k = th.dataset.k; sortDir = sortKey === k ? -sortDir : -1; sortKey = k; table(); });
   table(); chartsDraw();
 }
@@ -251,10 +278,12 @@ function table() {
     const st = v.band === "시험 중" ? `<span class="st">시험 중</span>` : `<span class="st ${v.moving ? "up" : "flat"}">${v.moving ? "▲ 성장" : "■ 정체"} · ${v.band}</span>`;
     const len = v.len > 40 ? `<span class="lo">${v.len}s</span>` : `${v.len}s`;
     const sw = v.swipe == null ? "<span class='dim'>-</span>" : `<span class="${v.swipe <= 45 ? "hi" : v.swipe >= 60 ? "lo" : ""}">${Math.round(v.swipe)}%</span>`;
-    return `<tr data-id="${v.id}"><td class="l title"><a href="https://youtu.be/${v.id}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(v.title)}</a><div class="p">${v.pub_kst}</div></td>
-      <td>${len}</td><td><b>${fmt(v.views)}</b></td><td>${short(v.v6)}</td><td>${short(v.v24)}</td><td>${short(v.v48)}</td><td>${sw}</td><td>${avp}</td><td>${re}</td>
-      <td>${v.lr == null ? "-" : v.lr.toFixed(1)}</td><td>${fmt(v.comments)}</td><td>${v.shares == null ? "-" : fmt(v.shares)}</td><td>${st}</td><td class="l">${spark(v)}</td></tr>`;
+    return `<tr data-id="${v.id}"><td class="l title"><div class="tt" title="${esc(v.title)}">${esc(v.title)}</div><div class="p">${v.pub_kst.slice(5)} · ${len}</div></td>
+      <td class="len" data-l="길이">${len}</td><td class="big" data-l="조회"><b>${fmt(v.views)}</b></td><td data-l="6시간">${short(v.v6)}</td><td data-l="1일">${short(v.v24)}</td><td data-l="2일">${short(v.v48)}</td><td data-l="3일">${short(v.v72)}</td><td data-l="7일">${short(v.v168)}</td>
+      <td data-l="넘긴 %">${sw}</td><td data-l="평균 시청률">${avp}</td><td data-l="끝까지 본 %">${re}</td>
+      <td data-l="좋아요율">${v.lr == null ? "-" : v.lr.toFixed(1)}</td><td data-l="댓글">${fmt(v.comments)}</td><td data-l="공유">${v.shares == null ? "-" : fmt(v.shares)}</td><td class="stc" data-l="단계">${st}</td><td class="l spk">${spark(v)}</td></tr>`;
   }).join("");
+  document.querySelectorAll("#tb td[data-l]").forEach(td => { if (td.textContent.trim() === "-") td.classList.add("na"); });
   document.querySelectorAll("#tb tr").forEach(tr => tr.onclick = () => detail(tr.dataset.id));
 }
 
@@ -262,7 +291,7 @@ function chartsDraw() {
   const d = current, s1 = css("--s1"), s2 = css("--s2");
   const bar = (labels, vals, color = s1) => ({ type: "bar", data: { labels, datasets: [{ data: vals, backgroundColor: color, borderRadius: 4, borderSkipped: "start", maxBarThickness: 22 }] } });
   const hl = d.hourly || [];
-  mk($("#cHour"), Object.assign(bar(hl.map(h => h[0].slice(5, 13).replace("T", " ") + "시"), hl.map(h => h[1])), { options: baseOpts() }));
+  mk($("#cHour"), Object.assign(bar(hl.map(h => h[0].slice(5, 13).replace("T", " ") + "시"), hl.map(h => h[1])), { options: baseOpts({ scales: Object.assign(baseOpts().scales, { x: Object.assign(baseOpts().scales.x, { ticks: Object.assign(baseOpts().scales.x.ticks, { maxTicksLimit: 7, callback: function (v) { return this.getLabelForValue(v); } }) }) }) }) }));
   const dy = (d.daily || []).filter(x => x.views > 0);
   mk($("#cDay"), Object.assign(bar(dy.map(x => x.day.slice(5)), dy.map(x => x.views)), { options: baseOpts({ plugins: Object.assign(baseOpts().plugins, {
     tooltip: Object.assign(baseOpts().plugins.tooltip, { callbacks: { label: c => { const x = dy[c.dataIndex]; return [`조회 ${fmt(x.views)}`, `좋아요 ${fmt(x.likes)} · 댓글 ${fmt(x.comments)}`, `공유 ${fmt(x.shares)} · 구독 +${x.subscribersGained}`]; } } }) }) }) }));
@@ -299,7 +328,7 @@ function detail(id) {
   dcharts.forEach(c => c.destroy()); dcharts = [];
   const tr = v.traffic || {}, tt = Object.values(tr).reduce((a, b) => a + b, 0) || 1;
   dlg.innerHTML = `<div class="dlg-h"><div><h3>${esc(v.title)}</h3><div class="upd">${v.pub_kst} · ${v.len}초 · <a href="https://youtu.be/${v.id}" target="_blank" rel="noopener">영상 열기</a></div></div><button class="x" aria-label="닫기">×</button></div>
-    <div class="facts"><span>조회 <b>${fmt(v.views)}</b></span><span>6h <b>${short(v.v6)}</b> · 24h <b>${short(v.v24)}</b> · 48h <b>${short(v.v48)}</b> · 72h <b>${short(v.v72)}</b></span>
+    <div class="facts"><span>조회 <b>${fmt(v.views)}</b></span><span>6시간 <b>${short(v.v6)}</b> · 1일 <b>${short(v.v24)}</b> · 2일 <b>${short(v.v48)}</b> · 3일 <b>${short(v.v72)}</b> · 7일 <b>${short(v.v168)}</b></span>
       <span>평균 시청률 <b>${pct(v.avp)}</b></span><span>끝까지 본 <b>${v.r_end == null ? "-" : Math.round(v.r_end * 100) + "%"}</b></span><span>첫 장면 재생 <b>${v.r_start == null ? "-" : "평균 " + v.r_start.toFixed(1) + "번"}</b> <span class="dim">(1번 넘으면 다시 본 사람이 많음)</span></span>
       <span>바로 넘긴 비율(이탈율) <b>${v.eng == null ? "-" : pct((1 - v.eng) * 100)}</b></span><span>좋아요 <b>${fmt(v.likes)}</b> · 댓글 <b>${fmt(v.comments)}</b> · 공유 <b>${v.shares ?? "-"}</b> · 구독 <b>+${v.subs ?? "-"}</b></span>
       <span>쇼츠 피드 <b>${pct((tr.SHORTS || 0) / tt * 100)}</b> · 검색 <b>${pct((tr.YT_SEARCH || 0) / tt * 100)}</b></span></div>

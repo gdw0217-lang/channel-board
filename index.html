@@ -98,7 +98,6 @@ td.title .p { color: var(--muted); font-size: 12px; font-weight: 400; margin-top
   td.len { display: none; }
   td.na { display: none; }
   td.stc { grid-column: span 2; }
-  td.spk { grid-column: span 2; align-self: end; text-align: right; }
   .glossary { font-size: 12.5px; }
   .tools select { flex: 1 1 40%; }
   ul.terms { columns: 1; }
@@ -222,7 +221,7 @@ function render() {
       <select id="sk" aria-label="정렬">${SORTS.map(([k, n]) => `<option value="${k}" ${sortKey === k ? "selected" : ""}>${n}</option>`).join("")}</select></div>
     <div class="tbl"><table><thead><tr>
       <th class="l" data-k="published">영상</th><th data-k="len">길이</th><th data-k="views">조회</th><th data-k="v6">6시간</th><th data-k="v24">1일</th><th data-k="v48">2일</th><th data-k="v72">3일</th><th data-k="v168">7일</th>
-      <th data-k="avp" title="영상 길이 대비 평균 몇 % 봤나(100% 넘으면 다시 봄)">평균 시청률</th><th data-k="r_end" title="마지막 장면까지 남은 시청자 비율">끝까지 본 %</th><th data-k="lr" title="조회 100번에 좋아요 몇 개">좋아요율</th><th data-k="comments">댓글</th><th data-k="shares">공유</th><th data-k="band">단계</th><th class="l">추세</th>
+      <th data-k="avp" title="영상 길이 대비 평균 몇 % 봤나(100% 넘으면 다시 봄)">평균 시청률</th><th data-k="r_end" title="마지막 장면까지 남은 시청자 비율">끝까지 본 %</th><th data-k="lr" title="조회 100번에 좋아요 몇 개">좋아요율</th><th data-k="comments">댓글</th><th data-k="shares">공유</th><th data-k="band">단계</th>
     </tr></thead><tbody id="tb"></tbody></table></div>
     <div class="tools" style="margin:10px 0 0;justify-content:center"><button class="tab" id="more"></button></div>
   </section>
@@ -280,7 +279,7 @@ function table() {
     return `<tr data-id="${v.id}"><td class="l title"><div class="tt" title="${esc(v.title)}">${esc(v.title)}</div><div class="p">${v.pub_kst.slice(5)} · ${len}</div></td>
       <td class="len" data-l="길이">${len}</td><td class="big" data-l="조회"><b>${fmt(v.views)}</b></td><td data-l="6시간">${short(v.v6)}</td><td data-l="1일">${short(v.v24)}</td><td data-l="2일">${short(v.v48)}</td><td data-l="3일">${short(v.v72)}</td><td data-l="7일">${short(v.v168)}</td>
       <td data-l="평균 시청률">${avp}</td><td data-l="끝까지 본 %">${re}</td>
-      <td data-l="좋아요율">${v.lr == null ? "-" : v.lr.toFixed(1)}</td><td data-l="댓글">${fmt(v.comments)}</td><td data-l="공유">${v.shares == null ? "-" : fmt(v.shares)}</td><td class="stc" data-l="단계">${st}</td><td class="l spk">${spark(v)}</td></tr>`;
+      <td data-l="좋아요율">${v.lr == null ? "-" : v.lr.toFixed(1)}</td><td data-l="댓글">${fmt(v.comments)}</td><td data-l="공유">${v.shares == null ? "-" : fmt(v.shares)}</td><td class="stc" data-l="단계">${st}</td></tr>`;
   }).join("");
   document.querySelectorAll("#tb td[data-l]").forEach(td => { if (td.textContent.trim() === "-") td.classList.add("na"); });
   document.querySelectorAll("#tb tr").forEach(tr => tr.onclick = () => detail(tr.dataset.id));
